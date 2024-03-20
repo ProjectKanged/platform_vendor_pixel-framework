@@ -21,62 +21,55 @@ import static com.android.systemui.Dependency.LEAK_REPORT_EMAIL_NAME;
 
 import android.content.Context;
 import android.hardware.SensorPrivacyManager;
-import android.os.Handler;
 import android.os.PowerManager;
-
-import androidx.annotation.Nullable;
 
 import com.android.systemui.qs.QsEventLogger;
 import com.android.keyguard.KeyguardViewController;
 import com.android.systemui.assist.AssistManager;
+import com.android.systemui.battery.BatterySaverModule;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.controls.controller.ControlsTileResourceConfiguration;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Background;
-import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.demomode.DemoModeController;
 import com.android.systemui.dock.DockManager;
 import com.android.systemui.dock.DockManagerImpl;
 import com.android.systemui.doze.DozeHost;
 import com.android.systemui.dump.DumpManager;
-import com.android.systemui.lineage.LineageModule;
 import com.android.systemui.media.dagger.MediaModule;
+import com.android.systemui.navigationbar.NavigationBarControllerModule;
+import com.android.systemui.shade.ShadeModule;
 import com.android.systemui.navigationbar.gestural.GestureModule;
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
 import com.android.systemui.plugins.qs.QSFactory;
-import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.EnhancedEstimates;
 import com.android.systemui.qs.dagger.QSModule;
 import com.android.systemui.qs.tileimpl.QSFactoryImpl;
 import com.android.systemui.recents.Recents;
 import com.android.systemui.recents.RecentsImplementation;
+import com.android.systemui.scene.SceneContainerFrameworkModule;
 import com.android.systemui.screenshot.ReferenceScreenshotModule;
+import com.android.systemui.settings.dagger.MultiUserUtilsModule;
 import com.android.systemui.shade.NotificationShadeWindowControllerImpl;
-import com.android.systemui.shade.ShadeExpansionStateManager;
 import com.android.systemui.settings.UserContentResolverProvider;
 import com.android.systemui.statusbar.CommandQueue;
-import com.android.systemui.statusbar.events.StatusBarEventsModule;
 import com.android.systemui.statusbar.NotificationLockscreenUserManager;
 import com.android.systemui.statusbar.NotificationLockscreenUserManagerImpl;
 import com.android.systemui.statusbar.NotificationShadeWindowController;
 import com.android.systemui.statusbar.KeyguardIndicationController;
-import com.android.systemui.statusbar.notification.collection.provider.VisualStabilityProvider;
-import com.android.systemui.statusbar.notification.collection.render.GroupMembershipManager;
+import com.android.systemui.statusbar.KeyboardShortcutsModule;
 import com.android.systemui.statusbar.phone.DozeServiceHost;
-import com.android.systemui.statusbar.phone.HeadsUpManagerPhone;
-import com.android.systemui.statusbar.phone.KeyguardBypassController;
+import com.android.systemui.statusbar.phone.HeadsUpModule;
 import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
-import com.android.systemui.statusbar.policy.AccessibilityManagerWrapper;
-import com.android.systemui.statusbar.policy.ConfigurationController;
+import com.android.systemui.statusbar.phone.fragment.CollapsedStatusBarFragmentStartableModule;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedControllerImpl;
-import com.android.systemui.statusbar.policy.HeadsUpManager;
-import com.android.systemui.statusbar.policy.HeadsUpManagerLogger;
 import com.android.systemui.statusbar.policy.IndividualSensorPrivacyController;
 import com.android.systemui.statusbar.policy.IndividualSensorPrivacyControllerImpl;
 import com.android.systemui.statusbar.policy.SensorPrivacyController;
 import com.android.systemui.statusbar.policy.SensorPrivacyControllerImpl;
 import com.android.systemui.volume.dagger.VolumeModule;
+import com.android.systemui.wallpapers.dagger.WallpaperModule;
 import com.android.systemui.rotationlock.RotationLockModule;
 import com.android.systemui.statusbar.policy.AospPolicyModule;
 
@@ -109,23 +102,32 @@ import dagger.Provides;
 import dagger.Lazy;
 
 @Module(includes = {
+        AospPolicyModule.class,
+        BatterySaverModule.class,
+        CollapsedStatusBarFragmentStartableModule.class,
         GestureModule.class,
+        HeadsUpModule.class,
         MediaModule.class,
-        GoogleQSModule.class,
+        MultiUserUtilsModule.class,
+        NavigationBarControllerModule.class,
+        QSModule.class,
+        ShadeModule.class,
         PowerModuleGoogle.class,
+        GoogleQSModule.class,
         QSModuleGoogle.class,
         ReferenceScreenshotModule.class,
+        RotationLockModule.class,
+        SceneContainerFrameworkModule.class,
         StartCentralSurfacesGoogleModule.class,
         VolumeModule.class,
+        WallpaperModule.class,
+        KeyboardShortcutsModule.class,
         SmartspaceGoogleModule.class,
         DreamlinerModule.class,
         ReverseChargingModule.class,
         AssistModule.class,
         ColumbusModule.class,
-        StatusBarEventsModule.class,
-        SystemUIGooglePolicyModule.class,
-        RotationLockModule.class,
-        LineageModule.class
+        SystemUIGooglePolicyModule.class
 })
 public abstract class SystemUIGoogleModule {
 
@@ -165,38 +167,6 @@ public abstract class SystemUIGoogleModule {
     static boolean provideAllowNotificationLongPress() {
         return true;
     }
-
-    @SysUISingleton
-    @Provides
-    static HeadsUpManagerPhone provideHeadsUpManagerPhone(
-            Context context,
-            HeadsUpManagerLogger headsUpManagerLogger,
-            StatusBarStateController statusBarStateController,
-            KeyguardBypassController bypassController,
-            GroupMembershipManager groupManager,
-            VisualStabilityProvider visualStabilityProvider,
-            ConfigurationController configurationController,
-            @Main Handler handler,
-            AccessibilityManagerWrapper accessibilityManagerWrapper,
-            QsEventLogger uiEventLogger,
-            ShadeExpansionStateManager shadeExpansionStateManager) {
-        return new HeadsUpManagerPhone(
-                context,
-                headsUpManagerLogger,
-                statusBarStateController,
-                bypassController,
-                groupManager,
-                visualStabilityProvider,
-                configurationController,
-                handler,
-                accessibilityManagerWrapper,
-                uiEventLogger,
-                shadeExpansionStateManager
-        );
-    }
-
-    @Binds
-    abstract HeadsUpManager bindHeadsUpManagerPhone(HeadsUpManagerPhone headsUpManagerPhone);
 
     @Provides
     @SysUISingleton

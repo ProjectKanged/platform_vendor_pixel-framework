@@ -16,38 +16,23 @@
 
 package com.google.android.systemui.assist;
 
-import static org.lineageos.internal.util.DeviceKeysConstants.*;
-
-import android.content.ContentResolver;
 import android.content.Context;
+import android.os.ServiceManager;
+import com.android.internal.widget.ILockSettings;
 
 import com.android.systemui.dagger.SysUISingleton;
 
 import javax.inject.Inject;
 
-import lineageos.providers.LineageSettings;
-
 @SysUISingleton
 public class OpaEnabledSettings {
 
     private final Context mContext;
-    private final ContentResolver mContentResolver;
-
-    private Action mHomeLongPressAction;
+    private final ILockSettings mLockSettings = ILockSettings.Stub.asInterface(ServiceManager.getService("lock_settings"));
 
     @Inject
     public OpaEnabledSettings(Context context) {
         mContext = context;
-        mContentResolver = context.getContentResolver();
-
-        mHomeLongPressAction = Action.fromIntSafe(mContext.getResources().getInteger(
-                org.lineageos.platform.internal.R.integer.config_longPressOnHomeBehavior));
-        if (mHomeLongPressAction.ordinal() > Action.SLEEP.ordinal()) {
-            mHomeLongPressAction = Action.NOTHING;
-        }
-        mHomeLongPressAction = Action.fromSettings(mContentResolver,
-                LineageSettings.System.KEY_HOME_LONG_PRESS_ACTION,
-                mHomeLongPressAction);
     }
 
     public boolean isOpaEligible() {
@@ -66,12 +51,5 @@ public class OpaEnabledSettings {
 
     public boolean isAgsaAssistant() {
         return OpaUtils.isAGSACurrentAssistant(mContext);
-    }
-
-    public boolean isLongPressHomeEnabled() {
-        mHomeLongPressAction = Action.fromSettings(mContentResolver,
-                LineageSettings.System.KEY_HOME_LONG_PRESS_ACTION,
-                mHomeLongPressAction);
-        return mHomeLongPressAction == Action.SEARCH;
     }
 }

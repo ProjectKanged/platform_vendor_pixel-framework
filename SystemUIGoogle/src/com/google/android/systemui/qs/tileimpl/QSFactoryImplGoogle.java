@@ -48,7 +48,7 @@ public class QSFactoryImplGoogle extends QSFactoryImpl {
     @Inject
     public QSFactoryImplGoogle(
             Lazy<QSHost> qsHostLazy,
-            Provider<CustomTile.Builder> customTileBuilderProvider,
+            Provider<CustomTile.Factory> customTileBuilderProvider,
             Map<String, Provider<QSTileImpl<?>>> tileMap) {
         super(qsHostLazy,
                 customTileBuilderProvider, tileMap);
